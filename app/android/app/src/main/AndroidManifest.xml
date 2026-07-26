@@ -6,7 +6,7 @@
 
     <application
         android:label="arinanoX"
-        android:name="${applicationName}"
+        android:name=".ArinanoxApplication"
         android:icon="@mipmap/ic_launcher">
 
         <activity
