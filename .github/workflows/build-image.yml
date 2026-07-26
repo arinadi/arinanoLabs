@@ -1,12 +1,13 @@
 name: Build arinanoX Image
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'image/**'
-      - '.github/workflows/**'
   workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Image tag (default: latest)'
+        required: false
+        default: 'latest'
+        type: string
 
 jobs:
   build:
@@ -37,5 +38,5 @@ jobs:
           platforms: linux/arm64
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/arinanox:latest
+            ghcr.io/${{ github.repository_owner }}/arinanox:${{ inputs.tag }}
             ghcr.io/${{ github.repository_owner }}/arinanox:1.0.${{ github.run_number }}

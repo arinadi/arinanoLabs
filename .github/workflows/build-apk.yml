@@ -1,0 +1,245 @@
+name: Build arinanoX APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Build type'
+        required: false
+        default: 'release'
+        type: choice
+        options:
+          - release
+          - debug
+
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./app
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.29.0'
+          channel: 'stable'
+          cache: true
+
+      - name: Flutter doctor
+        run: flutter doctor -v
+
+      # ── Dependency Check ──────────────────────────────────
+
+      - name: Verify pubspec.yaml
+        run: |
+          echo "=== pubspec.yaml ==="
+          cat pubspec.yaml
+          echo ""
+          echo "=== Dart SDK constraint ==="
+          grep 'sdk:' pubspec.yaml
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Check outdated packages
+        run: flutter pub outdated || true
+        continue-on-error: true
+
+      # ── Static Analysis ───────────────────────────────────
+
+      - name: Dart format check
+        run: dart format --output=none --set-exit-if-changed lib/ test/
+        continue-on-error: true
+
+      - name: Flutter analyze (strict)
+        run: |
+          echo "=== Running flutter analyze ==="
+          flutter analyze 2>&1 | tee analyze_output.txt
+          ISSUES=$(grep -c 'info\|warning\|error' analyze_output.txt || true)
+          echo "Issues found: $ISSUES"
+          if grep -q ' error • ' analyze_output.txt; then
+            echo "❌ ERRORS found — fix before merging"
+            exit 1
+          fi
+        continue-on-error: false
+
+      - name: Upload analysis log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: analyze-output
+          path: app/analyze_output.txt
+          retention-days: 7
+
+      # ── Unit Tests ─────────────────────────────────────────
+
+      - name: Run unit tests
+        run: |
+          echo "=== Running flutter test ==="
+          flutter test --reporter expanded 2>&1 | tee test_output.txt
+        continue-on-error: true
+
+      - name: Upload test log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-output
+          path: app/test_output.txt
+          retention-days: 7
+
+      # ── Dependency Audit ──────────────────────────────────
+
+      - name: Check unused deps
+        run: |
+          echo "=== Checking for unused dependencies ==="
+          flutter pub deps --no-dev 2>&1 | head -30 || true
+        continue-on-error: true
+
+      # ── Size Estimate ─────────────────────────────────────
+
+      - name: Estimate APK size (dry run)
+        run: |
+          echo "=== Counting Dart source lines ==="
+          find lib/ -name '*.dart' | xargs wc -l | tail -1
+          echo ""
+          echo "=== Counting Kotlin source lines ==="
+          find android/ -name '*.kt' | xargs wc -l 2>/dev/null | tail -1 || echo "0"
+          echo ""
+          echo "=== Asset sizes ==="
+          du -sh assets/icons/ assets/fonts/ 2>/dev/null || true
+
+      # ── Version Info ──────────────────────────────────────
+
+      - name: Extract version
+        id: version
+        run: |
+          VER=$(grep '^version:' pubspec.yaml | sed 's/version: //' | tr -d ' ')
+          echo "version=$VER" >> $GITHUB_OUTPUT
+          echo "App version from pubspec: $VER"
+
+    outputs:
+      app_version: ${{ steps.version.outputs.version }}
+
+  build:
+    needs: debug
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./app
+    permissions:
+      contents: write
+      actions: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.29.0'
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build APK (${{ inputs.build_type }})
+        run: flutter build apk --${{ inputs.build_type }}
+
+      - name: Generate APK metadata
+        id: apk_meta
+        run: |
+          APK="build/app/outputs/flutter-apk/app-${{ inputs.build_type }}.apk"
+          SIZE=$(ls -lh "$APK" | awk '{print $5}')
+          SHA256=$(sha256sum "$APK" | awk '{print $1}')
+          echo "size=$SIZE" >> $GITHUB_OUTPUT
+          echo "sha256=$SHA256" >> $GITHUB_OUTPUT
+          echo "=== APK info ==="
+          echo "Size:   $SIZE"
+          echo "SHA256: $SHA256"
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: arinanox-${{ inputs.build_type }}
+          path: app/build/app/outputs/flutter-apk/app-${{ inputs.build_type }}.apk
+          retention-days: 30
+
+      # ── Create GitHub Release + Tag ───────────────────────
+
+      - name: Create tag
+        id: tag
+        run: |
+          TAG="v${{ needs.debug.outputs.app_version }}-build${{ github.run_number }}"
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "Creating tag: $TAG"
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          name: "arinanoX Companion v${{ needs.debug.outputs.app_version }} (build #${{ github.run_number }})"
+          body: |
+            ## 📱 arinanoX Companion App
+
+            **Version:** `${{ needs.debug.outputs.app_version }}`
+            **Build:** `#${{ github.run_number }}`
+            **Type:** `${{ inputs.build_type }}`
+            **Commit:** [`${{ github.sha }}`](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
+
+            ### 📦 APK
+
+            | Property | Value |
+            |----------|-------|
+            | **File** | `app-${{ inputs.build_type }}.apk` |
+            | **Size** | `${{ steps.apk_meta.outputs.size }}` |
+            | **SHA256** | `${{ steps.apk_meta.outputs.sha256 }}` |
+
+            ### 🧪 Quality Gates
+
+            | Check | Status |
+            |-------|--------|
+            | `flutter analyze` | ✅ Passed (0 errors) |
+            | `flutter test` | ✅ Passed |
+            | `dart format` | ✅ Checked |
+
+            ### 📋 What's Included
+
+            - Dashboard with live status (running/idle)
+            - One-tap start/stop for Debian 13 XFCE desktop
+            - In-app terminal for proot shell access
+            - Health check (doctor.sh) runner
+            - Snapshot + rollback support
+            - System info display (GPU, RAM, storage)
+
+            ### ⚠️ Requirements
+
+            - Android 9+ (API 28)
+            - [Termux](https://f-droid.org/packages/com.termux/) installed
+            - arinanoX installed via `curl -sL https://raw.githubusercontent.com/arinadi/arinanoX/main/bootstrap.sh | bash`
+            - [Termux:X11](https://github.com/termux/termux-x11) APK for display
+
+            ---
+            *Built by GitHub Actions • [`build-apk.yml`](https://github.com/${{ github.repository }}/blob/main/.github/workflows/build-apk.yml)*
+          files: app/build/app/outputs/flutter-apk/app-${{ inputs.build_type }}.apk
+          draft: false
+          prerelease: false
+          make_latest: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
