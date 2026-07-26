@@ -164,15 +164,23 @@ jobs:
       - name: Build APK (${{ inputs.build_type }})
         run: flutter build apk --${{ inputs.build_type }}
 
+      - name: Rename APK with version
+        run: |
+          SRC="build/app/outputs/flutter-apk/app-${{ inputs.build_type }}.apk"
+          DST="build/app/outputs/flutter-apk/arinanox-v${{ needs.debug.outputs.app_version }}-${{ inputs.build_type }}.apk"
+          mv "$SRC" "$DST"
+          echo "apk_file=$(basename "$DST")" >> $GITHUB_ENV
+
       - name: Generate APK metadata
         id: apk_meta
         run: |
-          APK="build/app/outputs/flutter-apk/app-${{ inputs.build_type }}.apk"
+          APK="build/app/outputs/flutter-apk/${{ env.apk_file }}"
           SIZE=$(ls -lh "$APK" | awk '{print $5}')
           SHA256=$(sha256sum "$APK" | awk '{print $1}')
           echo "size=$SIZE" >> $GITHUB_OUTPUT
           echo "sha256=$SHA256" >> $GITHUB_OUTPUT
           echo "=== APK info ==="
+          echo "File:   ${{ env.apk_file }}"
           echo "Size:   $SIZE"
           echo "SHA256: $SHA256"
 
@@ -180,7 +188,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: arinanox-${{ inputs.build_type }}
-          path: app/build/app/outputs/flutter-apk/app-${{ inputs.build_type }}.apk
+          path: app/build/app/outputs/flutter-apk/${{ env.apk_file }}
           retention-days: 30
 
       # ── Create GitHub Release + Tag ───────────────────────
@@ -209,7 +217,7 @@ jobs:
 
             | Property | Value |
             |----------|-------|
-            | **File** | `app-${{ inputs.build_type }}.apk` |
+            | **File** | `${{ env.apk_file }}` |
             | **Size** | `${{ steps.apk_meta.outputs.size }}` |
             | **SHA256** | `${{ steps.apk_meta.outputs.sha256 }}` |
 
@@ -239,7 +247,7 @@ jobs:
 
             ---
             *Built by GitHub Actions • [`build-apk.yml`](https://github.com/${{ github.repository }}/blob/main/.github/workflows/build-apk.yml)*
-          files: app/build/app/outputs/flutter-apk/app-${{ inputs.build_type }}.apk
+          files: app/build/app/outputs/flutter-apk/${{ env.apk_file }}
           draft: false
           prerelease: false
           make_latest: true
