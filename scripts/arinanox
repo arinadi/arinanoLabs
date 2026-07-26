@@ -24,10 +24,6 @@ arinanoX v${VERSION} — Your phone is a Linux workstation.
   arinanox stop          Stop desktop
   arinanox status        System status (image, storage, snapshots)
   arinanox doctor        Full health-check
-  arinanox update        Full update (⚠️ resets core, preserves user layer)
-  arinanox rollback      Rollback core image to arinanox-prev
-  arinanox backup        Backup /home/admin to /sdcard/arinanox-backup
-  arinanox restore       Restore backup from /sdcard
   arinanox store         APT Store GUI (install/search/upgrade packages)
   arinanox snapshot      Snapshot user home (hardlink, instant, 3 retained)
   arinanox install       Add packages via manifest (declarative user layer)
@@ -59,43 +55,13 @@ case "$CMD" in
         exec bash "$SCRIPTS_DIR/doctor.sh"
         ;;
 
-    # ── Core management ──
-    update)
-        echo ">>> arinanox update — full reinstall"
-        echo "    ⚠ Core layer resets. User layer will be re-applied."
-        echo ""
-        read -p "    Continue? [y/N] " confirm
-        case "$confirm" in [yY]*) ;; *) echo "    Cancelled."; exit 0 ;; esac
-        
-        # Run bootstrap
-        curl -sL https://raw.githubusercontent.com/arinadi/arinanoX/main/bootstrap.sh | bash
-        
-        # Re-apply user manifest if exists
-        MANIFEST="$ARINANOX_DIR/user-manifest.yaml"
-        if [ -f "$MANIFEST" ]; then
-            echo ">>> Applying user manifest..."
-            bash "$SCRIPTS_DIR/manifest-apply.sh"
-        fi
-        echo ">>> Done. Start: arinanox start"
-        ;;
-
-    rollback)
-        ROLLBACK_SCRIPT="$SCRIPTS_DIR/proot-rollback.sh"
-        if [ -f "$ROLLBACK_SCRIPT" ]; then
-            exec bash "$ROLLBACK_SCRIPT"
-        else
-            echo "✗ Rollback script not found. Run: arinanox update"
-            exit 1
-        fi
-        ;;
-
     # ── Package management ──
     store)
         STORE_SCRIPT="$ARINANOX_DIR/tools/apt-store.sh"
         if [ -f "$STORE_SCRIPT" ]; then
             exec bash "$STORE_SCRIPT"
         else
-            echo "✗ APT Store not found. Run: arinanox update"
+            echo "✗ APT Store not found. Reinstall: curl -sL https://raw.githubusercontent.com/arinadi/arinanoX/main/bootstrap.sh | bash"
             exit 1
         fi
         ;;
@@ -139,10 +105,10 @@ case "$CMD" in
         
         ROOTFS="/data/data/com.termux/files/usr/var/lib/proot-distro/containers/arinanox/rootfs"
         if [ ! -d "$ROOTFS/home/admin" ]; then
-            echo "    ✗ No arinanox container. Run: arinanox update"
+            echo "    ✗ No arinanox container. Reinstall: curl -sL https://raw.githubusercontent.com/arinadi/arinanoX/main/bootstrap.sh | bash"
             exit 1
         fi
-        
+
         mkdir -p "$BACKUP_DIR"
         rsync -av --delete "$ROOTFS/home/admin/" "$BACKUP_DIR/home/" 2>&1 | tail -3
         echo "    ✓ Backup complete: $BACKUP_DIR"
@@ -160,10 +126,10 @@ case "$CMD" in
         
         ROOTFS="/data/data/com.termux/files/usr/var/lib/proot-distro/containers/arinanox/rootfs"
         if [ ! -d "$ROOTFS/home/admin" ]; then
-            echo "    ✗ No arinanox container. Run: arinanox update"
+            echo "    ✗ No arinanox container. Reinstall: curl -sL https://raw.githubusercontent.com/arinadi/arinanoX/main/bootstrap.sh | bash"
             exit 1
         fi
-        
+
         echo "    ⚠ This will overwrite /home/admin."
         read -p "    Continue? [y/N] " confirm
         case "$confirm" in [yY]*) ;; *) echo "    Cancelled."; exit 0 ;; esac
@@ -178,7 +144,7 @@ case "$CMD" in
         if [ -f "$SNAPSHOT_SCRIPT" ]; then
             exec bash "$SNAPSHOT_SCRIPT" "$@"
         else
-            echo "    ✗ Snapshot script not found. Run: arinanox update"
+            echo "    ✗ Snapshot script not found. Reinstall: curl -sL https://raw.githubusercontent.com/arinadi/arinanoX/main/bootstrap.sh | bash"
         fi
         ;;
 

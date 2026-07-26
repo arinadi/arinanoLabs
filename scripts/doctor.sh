@@ -112,15 +112,6 @@ else
     echo "  ${DIM} XFCE not running"
 fi
 
-# ── Updates ─────────────────────────────────────────────────
-echo "── Updates ──"
-if [ -f "$HOME/.arinanox/scripts/proot-rollback.sh" ]; then
-    echo "  ${GREEN} rollback available"
-else
-    echo "  ${WARN} no rollback script"
-    WARNS=$((WARNS + 1))
-fi
-
 # ── Summary ─────────────────────────────────────────────────
 echo ""
 echo "──────────────────────────────────────────"

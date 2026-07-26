@@ -2,29 +2,23 @@
 set -euo pipefail
 
 # ═══════════════════════════════════════════
-#  arinanoX proot-setup — Silverblue-style
-#  Atomic: keep previous deployment for rollback
+#  arinanoX proot-setup — simple install
+#  Rolling release: fresh install each time
 # ═══════════════════════════════════════════
 
 IMAGE="ghcr.io/arinadi/arinanox:latest"
 CONTAINER="arinanox"
-PREV_CONTAINER="arinanox-prev"
 CONTAINERS_DIR="/data/data/com.termux/files/usr/var/lib/proot-distro/containers"
 
 echo ">>> Setting up arinanoX proot..."
 
-# Stage: keep current as "previous" for rollback
+# Remove existing container if present
 if [ -d "${CONTAINERS_DIR}/${CONTAINER}" ]; then
-    echo "  [*] Keeping current deployment as rollback backup..."
-    if [ -d "${CONTAINERS_DIR}/${PREV_CONTAINER}" ]; then
-        proot-distro remove "$PREV_CONTAINER" 2>/dev/null || true
-    fi
-    mv "${CONTAINERS_DIR}/${CONTAINER}" "${CONTAINERS_DIR}/${PREV_CONTAINER}"
-    echo "  [*] Previous deployment saved: $PREV_CONTAINER"
+    echo "  [*] Removing previous container..."
+    proot-distro remove "$CONTAINER" 2>/dev/null || true
 fi
 
 echo "  [*] Pulling arinanoX image..."
 proot-distro install "$IMAGE" --name "$CONTAINER"
 
 echo "  [+] arinanoX proot ready."
-echo "  [+] Rollback available: bash ~/.arinanox/scripts/proot-rollback.sh"

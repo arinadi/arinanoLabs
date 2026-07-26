@@ -2,7 +2,7 @@
 # ═══════════════════════════════════════════════════════════════
 # arinanoX — Manifest Apply
 # Reads user-manifest.yaml, installs packages, restores dotfiles
-# Called automatically after `arinanox update`
+# Called manually after fresh install
 # ═══════════════════════════════════════════════════════════════
 set -euo pipefail
 

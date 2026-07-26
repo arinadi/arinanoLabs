@@ -44,9 +44,6 @@ echo ">>> Removing proot container..."
 if proot-distro list 2>/dev/null | grep -q "arinanox"; then
     proot-distro remove arinanox 2>&1 && echo "  [x] arinanox removed" || echo "  [-] Failed to remove"
 fi
-if proot-distro list 2>/dev/null | grep -q "arinanox-prev"; then
-    proot-distro remove arinanox-prev 2>&1 && echo "  [x] arinanox-prev removed" || echo "  [-] Failed to remove"
-fi
 
 # 3. Remove launcher scripts
 echo ""

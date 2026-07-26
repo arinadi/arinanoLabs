@@ -25,7 +25,7 @@ if [ -t 0 ]; then
         echo "║  Status: installed                   ║"
         echo "╠═══════════════════════════════════════╣"
         echo "║                                       ║"
-        echo "║  [1] Update / Reinstall              ║"
+        echo "║  [1] Reinstall (fresh)               ║"
         echo "║  [2] Uninstall                       ║"
         echo "║  [3] Exit                             ║"
         echo "║                                       ║"
@@ -72,8 +72,7 @@ mkdir -p "$SCRIPTS_DIR" "$LAUNCHERS_DIR"
 
 for f in host-setup.sh proot-setup.sh api-bridge-setup.sh xfce-config.sh \
          launcher-gen.sh motd-setup.sh \
-         proot-backup.sh proot-restore.sh \
-         proot-rollback.sh patch.sh \
+         patch.sh \
          seccomp-check.sh seccomp-fix.sh doctor.sh \
          manifest-generate.sh manifest-apply.sh user-snapshot.sh \
          status.sh; do

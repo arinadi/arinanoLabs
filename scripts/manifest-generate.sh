@@ -87,10 +87,10 @@ done
 cat > "$MANIFEST" <<YAML
 # arinanoX User Manifest
 # Generated: $(date -Iseconds)
-# This file tracks your customizations so they survive updates.
+# This file tracks your customizations for backup/restore.
 #
 # Run after customizing:  arinanox snapshot create
-# Run after update:       arinanox install   (auto-applied)
+# Run after reinstall:    arinanox install   (re-apply packages)
 
 # User-installed packages (auto-detected from apt-mark)
 packages:
@@ -113,7 +113,7 @@ echo ""
 echo "  ✓ Manifest written: $MANIFEST"
 echo ""
 echo "  Review & customize it, then:"
-echo "    arinanox snapshot create    # checkpoint before update"
-echo "    arinanox update             # update + re-apply"
+echo "    arinanox snapshot create    # checkpoint before changes"
+echo "    arinanox install            # re-apply after fresh install"
 
 cat "$MANIFEST"

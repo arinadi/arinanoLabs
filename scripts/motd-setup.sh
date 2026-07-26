@@ -14,9 +14,8 @@ cat > /data/data/com.termux/files/usr/etc/motd << 'MOTDEOF'
  Stop:
     bash ~/stop.sh
 
- ⚠ Update (fresh install, wipes config):
-    curl -sL URL/bootstrap.sh | bash
-    See README for details.
+ Reinstall (fresh):
+    curl -sL https://raw.githubusercontent.com/arinadi/arinanoX/main/bootstrap.sh | bash
 
  User: admin / Pass: admin
 ==========================================
