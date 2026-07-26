@@ -21,22 +21,23 @@ Install from **F-Droid** (NOT Play Store):
 - [Termux:X11](https://github.com/termux/termux-x11/releases/tag/nightly) — display server
 - [Termux:API](https://f-droid.org/en/packages/com.termux.api/) — battery, clipboard, voice
 
-### 2. Install arinanoX
+### 2. Install arinanoX APK
 
-```bash
-curl -sL https://raw.githubusercontent.com/arinadi/arinanoX/main/bootstrap.sh | bash
-```
+Download the latest APK from [GitHub Releases](https://github.com/arinadi/arinanoX/releases) and install it.
 
-~30 seconds. Pulls a prebuilt Debian 13 + XFCE image from GitHub Container Registry.
+### 3. Open the app → tap **Install arinanoX**
 
-### 3. Start Desktop
+~30 seconds. The app downloads and sets up the prebuilt Debian 13 + XFCE image from GitHub Container Registry.
 
-Via Termux terminal:
-```bash
-arinanox start
-```
+### 4. Tap **Launch Desktop**
 
-Or via the **arinanoX companion app** (Android APK) — download from [GitHub Releases](https://github.com/arinadi/arinanoX/releases). One-tap start/stop, terminal, health check, snapshots, and script updates.
+Done. Full Linux desktop on your phone.
+
+> **CLI fallback:** You can also install via Termux terminal:
+> ```bash
+> curl -sL https://raw.githubusercontent.com/arinadi/arinanoX/main/bootstrap.sh | bash
+> arinanox start
+> ```
 
 ---
 
@@ -84,12 +85,15 @@ Download APK from [GitHub Releases](https://github.com/arinadi/arinanoX/releases
 
 | Feature | Description |
 |---------|-------------|
+| 📥 Install | Download and set up Debian 13 + XFCE (~30s, one tap) |
 | 🟢 Start/Stop | One-tap launch or shutdown XFCE desktop |
 | 💻 Terminal | In-app proot shell with streaming output |
 | 🩺 Health Check | Run doctor.sh to diagnose issues |
 | 📸 Snapshot | Instant user-home checkpoint (hardlinked) |
 | 🔄 Update Scripts | Download latest launchers + scripts from GitHub |
 | 📊 System Info | GPU, RAM, storage, container size |
+
+The app uses Termux bash internally — all commands run in the correct environment with proper PATH, HOME, and library paths.
 
 APK builds are CI-triggered manually (`workflow_dispatch`) — no spam on every commit.
 
@@ -106,21 +110,6 @@ arinanox store        # APT Store GUI (install/search/upgrade)
 arinanox snapshot     # Instant checkpoint (hardlinked, 3 retained)
 arinanox install      # Apply packages from user-manifest.yaml
 arinanox help         # All commands
-```
-
-### Reinstall (fresh)
-
-```bash
-curl -sL https://raw.githubusercontent.com/arinadi/arinanoX/main/bootstrap.sh | bash
-```
-
-### Update Scripts
-
-From the companion app: tap **Update Scripts**. Or from CLI (app does this automatically):
-
-```bash
-# The app downloads latest scripts + launchers from GitHub raw
-# and writes them to ~/.arinanox/scripts/ and ~/.arinanox/launchers/
 ```
 
 ---
@@ -169,10 +158,10 @@ Background processes get silently killed. Disable it:
 
 ```
 arinanoX/
-├── bootstrap.sh          ← one-command entry point
-├── app/                  ← 📱 Flutter companion app (APK)
+├── app/                  ← 📱 Flutter app (APK) — primary entry point
 │   ├── lib/              ←    Dart: screens, state, services, theme
 │   └── android/          ←    Kotlin: shell executor, script updater
+├── bootstrap.sh          ← CLI fallback: curl | bash
 ├── image/                ← 🎯 System definition (Dockerfile)
 │   ├── Dockerfile        ←    declarative: packages, configs, themes
 │   └── configs-target/   ←    XFCE, bash, GTK, autostart
