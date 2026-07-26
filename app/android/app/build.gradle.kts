@@ -33,17 +33,17 @@ android {
     buildTypes {
         release {
             // Use CI keystore if available (env vars), else fall back to debug
-            val keystorePath = System.getenv("ARINANOX_KEYSTORE_PATH")
-            val keystorePass = System.getenv("ARINANOX_KEYSTORE_PASS")
-            val keyAlias = System.getenv("ARINANOX_KEY_ALIAS")
-            val keyPass = System.getenv("ARINANOX_KEY_PASS")
+            val envKeystorePath = System.getenv("ARINANOX_KEYSTORE_PATH")
+            val envKeystorePass = System.getenv("ARINANOX_KEYSTORE_PASS")
+            val envKeyAlias = System.getenv("ARINANOX_KEY_ALIAS")
+            val envKeyPass = System.getenv("ARINANOX_KEY_PASS")
 
-            signingConfig = if (keystorePath != null && keystorePass != null) {
+            signingConfig = if (envKeystorePath != null && envKeystorePass != null) {
                 signingConfigs.create("release") {
-                    storeFile = file(keystorePath)
-                    storePassword = keystorePass
-                    keyAlias = keyAlias ?: "arinanox"
-                    keyPassword = keyPass ?: keystorePass
+                    storeFile = file(envKeystorePath)
+                    storePassword = envKeystorePass
+                    keyAlias = envKeyAlias ?: "arinanox"
+                    keyPassword = envKeyPass ?: envKeystorePass
                 }
             } else {
                 signingConfigs.getByName("debug")
