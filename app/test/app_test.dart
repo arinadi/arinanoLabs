@@ -10,7 +10,6 @@ void main() {
       expect(state.isRunning, false);
       expect(state.version, '');
       expect(state.containerSize, '');
-      expect(state.rollbackSize, '');
       expect(state.layeredPackages, 0);
       expect(state.terminalOutput, isNotEmpty);
       expect(state.terminalOutput.first, contains('arinanoX Terminal'));

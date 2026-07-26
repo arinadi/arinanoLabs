@@ -245,30 +245,6 @@ class HomeScreen extends StatelessWidget {
                         onTap: state.createSnapshot,
                       ),
 
-                      if (state.rollbackSize != 'none') ...[
-                        const SizedBox(height: 10),
-                        _ActionCard(
-                          icon: Icons.history_rounded,
-                          title: 'Rollback',
-                          subtitle:
-                              'Restore previous deployment (${state.rollbackSize})',
-                          color: ArinanoxTheme.warning,
-                          enabled: state.isInstalled,
-                          onTap: state.rollback,
-                        ),
-                      ],
-
-                      const SizedBox(height: 10),
-
-                      // ── Update ──
-                      _ActionCard(
-                        icon: Icons.system_update_rounded,
-                        title: 'Update',
-                        subtitle: 'Pull latest image and reinstall',
-                        color: ArinanoxTheme.secondary,
-                        enabled: state.isInstalled,
-                        onTap: state.runUpdate,
-                      ),
                     ]
                         .animate(interval: 80.ms)
                         .fadeIn(delay: 300.ms, duration: 400.ms)
@@ -394,11 +370,6 @@ class HomeScreen extends StatelessWidget {
           _infoRow(
             'Container Size',
             state.isInstalled ? state.containerSize : 'N/A',
-          ),
-          _divider(),
-          _infoRow(
-            'Rollback',
-            state.rollbackSize,
           ),
           _divider(),
           _infoRow(

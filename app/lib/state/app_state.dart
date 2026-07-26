@@ -7,14 +7,14 @@ import 'package:arinanox_app/services/shell_bridge.dart';
 /// - No setup wizard (arinanoX is pre-installed via Termux scripts)
 /// - No distro/DE picker (opinionated: Debian 13 + XFCE)
 /// - No root/chroot logic (proot-only)
-/// - Focus on: status, start/stop, terminal, snapshots, updates
+/// - Focus on: status, start/stop, terminal, health check, snapshots
+/// - Update/rollback removed — use CLI: arinanox update, arinanox rollback
 class AppState extends ChangeNotifier {
   // ── State ──
   bool _isInstalled = false;
   bool _isRunning = false;
   String _version = '';
   String _containerSize = '';
-  String _rollbackSize = '';
   int _layeredPackages = 0;
 
   // ── Device Info ──
@@ -33,7 +33,6 @@ class AppState extends ChangeNotifier {
   bool get isRunning => _isRunning;
   String get version => _version;
   String get containerSize => _containerSize;
-  String get rollbackSize => _rollbackSize;
   int get layeredPackages => _layeredPackages;
   Map<String, dynamic> get deviceInfo => _deviceInfo;
   String? get errorMessage => _errorMessage;
@@ -90,11 +89,6 @@ class AppState extends ChangeNotifier {
         // Get container size
         _containerSize = (await _runQuick(
           'du -sh /data/data/com.termux/files/usr/var/lib/proot-distro/containers/arinanox 2>/dev/null | cut -f1 || echo "N/A"',
-        )).trim();
-
-        // Get rollback size
-        _rollbackSize = (await _runQuick(
-          'du -sh /data/data/com.termux/files/usr/var/lib/proot-distro/containers/arinanox-prev 2>/dev/null | cut -f1 || echo "none"',
         )).trim();
 
         // Get layered packages count
@@ -156,19 +150,6 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  Future<void> runUpdate() async {
-    try {
-      _errorMessage = null;
-      _terminalOutput.add('\$ arinanox update\n');
-      notifyListeners();
-      await ArinanoxShell.executeCommand('arinanox update');
-      await refreshStatus();
-    } catch (e) {
-      _errorMessage = 'Failed to update: $e';
-      notifyListeners();
-    }
-  }
-
   Future<void> runDoctor() async {
     try {
       _errorMessage = null;
@@ -189,19 +170,6 @@ class AppState extends ChangeNotifier {
       await ArinanoxShell.executeCommand('arinanox snapshot');
     } catch (e) {
       _errorMessage = 'Snapshot failed: $e';
-      notifyListeners();
-    }
-  }
-
-  Future<void> rollback() async {
-    try {
-      _errorMessage = null;
-      _terminalOutput.add('\$ arinanox rollback\n');
-      notifyListeners();
-      await ArinanoxShell.executeCommand('arinanox rollback');
-      await refreshStatus();
-    } catch (e) {
-      _errorMessage = 'Rollback failed: $e';
       notifyListeners();
     }
   }
