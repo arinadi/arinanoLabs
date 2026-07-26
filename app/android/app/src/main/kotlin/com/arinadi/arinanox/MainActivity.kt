@@ -9,7 +9,14 @@ import android.content.Context
 import android.net.Uri
 import android.provider.Settings
 import android.content.Intent
+import android.util.Log
+import androidx.core.content.FileProvider
 import kotlin.concurrent.thread
+import org.json.JSONObject
+import java.io.File
+import java.io.FileOutputStream
+import java.net.HttpURLConnection
+import java.net.URL
 
 /**
  * Main Flutter activity for arinanoX.
@@ -122,6 +129,22 @@ class MainActivity : FlutterActivity() {
                         result.success(isBatteryOptimized())
                     }
 
+                    // ── App Update ──
+                    "checkAppUpdate" -> {
+                        thread {
+                            val info = checkGitHubRelease()
+                            runOnUiThread { result.success(info) }
+                        }
+                    }
+
+                    "installAppUpdate" -> {
+                        val url = call.argument<String>("url") ?: ""
+                        thread {
+                            val ok = downloadAndInstallApk(url)
+                            runOnUiThread { result.success(ok) }
+                        }
+                    }
+
                     else -> result.notImplemented()
                 }
             }
@@ -140,6 +163,104 @@ class MainActivity : FlutterActivity() {
                 data = Uri.parse("package:$packageName")
             }
             startActivity(intent)
+        }
+    }
+
+    // ── App Update (GitHub Releases) ──
+
+    private val GITHUB_API = "https://api.github.com/repos/arinadi/arinanoX/releases/latest"
+    private val GITHUB_REPO = "arinadi/arinanoX"
+
+    /**
+     * Hit GitHub Releases API, compare with current version.
+     * Returns null if up-to-date, or map with version + downloadUrl.
+     */
+    private fun checkGitHubRelease(): Map<String, Any>? {
+        return try {
+            val url = URL(GITHUB_API)
+            val conn = url.openConnection() as HttpURLConnection
+            conn.setRequestProperty("Accept", "application/vnd.github+json")
+            conn.setRequestProperty("X-GitHub-Api-Version", "2022-11-28")
+            conn.connectTimeout = 10_000
+            conn.readTimeout = 10_000
+
+            if (conn.responseCode != 200) return null
+            val body = conn.inputStream.bufferedReader().readText()
+            conn.disconnect()
+
+            val json = JSONObject(body)
+            val tagName = json.getString("tag_name").removePrefix("v")
+            val assets = json.getJSONArray("assets")
+
+            // Find the APK asset
+            var downloadUrl = ""
+            var apkSize = 0L
+            for (i in 0 until assets.length()) {
+                val asset = assets.getJSONObject(i)
+                val name = asset.getString("name")
+                if (name.endsWith(".apk")) {
+                    downloadUrl = asset.getString("browser_download_url")
+                    apkSize = asset.getLong("size")
+                    break
+                }
+            }
+            if (downloadUrl.isEmpty()) return null
+
+            // Compare versions (simple string compare — works for semver)
+            val currentVersion = packageManager.getPackageInfo(packageName, 0).versionName ?: "0.0.0"
+            if (tagName <= currentVersion) return null
+
+            mapOf(
+                "version" to tagName,
+                "downloadUrl" to downloadUrl,
+                "size" to apkSize
+            )
+        } catch (e: Exception) {
+            Log.e(TAG, "GitHub release check failed", e)
+            null
+        }
+    }
+
+    /**
+     * Download APK to cache dir, then open Android package installer.
+     */
+    private fun downloadAndInstallApk(downloadUrl: String): Boolean {
+        return try {
+            val file = File(cacheDir, "arinanox-update.apk")
+            val url = URL(downloadUrl)
+            val conn = url.openConnection() as HttpURLConnection
+            conn.connectTimeout = 30_000
+            conn.readTimeout = 60_000
+
+            if (conn.responseCode != 200) return false
+            val input = conn.inputStream
+            val output = FileOutputStream(file)
+            val buffer = ByteArray(8192)
+            var bytesRead: Int
+            var total = 0L
+            while (input.read(buffer).also { bytesRead = it } != -1) {
+                output.write(buffer, 0, bytesRead)
+                total += bytesRead
+            }
+            output.close()
+            input.close()
+            conn.disconnect()
+
+            // Open installer
+            val apkUri = FileProvider.getUriForFile(
+                this,
+                "$packageName.fileprovider",
+                file
+            )
+            val intent = Intent(Intent.ACTION_VIEW).apply {
+                setDataAndType(apkUri, "application/vnd.android.package-archive")
+                flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK
+            }
+            startActivity(intent)
+            true
+        } catch (e: Exception) {
+            Log.e(TAG, "APK download/install failed", e)
+            false
         }
     }
 }

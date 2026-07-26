@@ -7,8 +7,7 @@ import 'package:arinanox_app/services/shell_bridge.dart';
 /// - No setup wizard (arinanoX is pre-installed via Termux scripts)
 /// - No distro/DE picker (opinionated: Debian 13 + XFCE)
 /// - No root/chroot logic (proot-only)
-/// - Focus on: status, start/stop, terminal, health check, snapshots
-/// - Update/rollback removed — use CLI: arinanox update, arinanox rollback
+/// - Focus on: status, start/stop, terminal, health check, snapshots, updates
 class AppState extends ChangeNotifier {
   // ── State ──
   bool _isInstalled = false;
@@ -16,6 +15,12 @@ class AppState extends ChangeNotifier {
   String _version = '';
   String _containerSize = '';
   int _layeredPackages = 0;
+
+  // ── Update State ──
+  bool _updateAvailable = false;
+  String _latestVersion = '';
+  String _updateDownloadUrl = '';
+  bool _isUpdating = false;
 
   // ── Device Info ──
   Map<String, dynamic> _deviceInfo = {};
@@ -37,6 +42,11 @@ class AppState extends ChangeNotifier {
   Map<String, dynamic> get deviceInfo => _deviceInfo;
   String? get errorMessage => _errorMessage;
   List<String> get terminalOutput => _terminalOutput;
+
+  // ── Update Getters ──
+  bool get updateAvailable => _updateAvailable;
+  String get latestVersion => _latestVersion;
+  bool get isUpdating => _isUpdating;
 
   String get gpuType {
     final vendor = _deviceInfo['gpuVendor']?.toString() ?? '';
@@ -64,6 +74,7 @@ class AppState extends ChangeNotifier {
 
     await refreshStatus();
     await loadDeviceInfo();
+    await checkForAppUpdate(); // Fire-and-forget
   }
 
   Future<void> refreshStatus() async {
@@ -171,6 +182,45 @@ class AppState extends ChangeNotifier {
     } catch (e) {
       _errorMessage = 'Snapshot failed: $e';
       notifyListeners();
+    }
+  }
+
+  // ── Update (App APK from GitHub Releases) ──
+
+  Future<void> checkForAppUpdate() async {
+    try {
+      _errorMessage = null;
+      final info = await ArinanoxShell.checkAppUpdate();
+      if (info != null) {
+        _updateAvailable = true;
+        _latestVersion = info['version'] as String? ?? '';
+        _updateDownloadUrl = info['downloadUrl'] as String? ?? '';
+      } else {
+        _updateAvailable = false;
+      }
+      notifyListeners();
+    } catch (e) {
+      // Silently fail — network may be unavailable
+      _updateAvailable = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> installAppUpdate() async {
+    if (_updateDownloadUrl.isEmpty) return false;
+    try {
+      _isUpdating = true;
+      _errorMessage = null;
+      notifyListeners();
+      final ok = await ArinanoxShell.installAppUpdate(_updateDownloadUrl);
+      _isUpdating = false;
+      notifyListeners();
+      return ok;
+    } catch (e) {
+      _isUpdating = false;
+      _errorMessage = 'Update install failed: $e';
+      notifyListeners();
+      return false;
     }
   }
 
