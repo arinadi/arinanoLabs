@@ -158,6 +158,9 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Generate launcher icons
+        run: dart run flutter_launcher_icons
+
       - name: Build APK (${{ inputs.build_type }})
         run: flutter build apk --${{ inputs.build_type }}
 
