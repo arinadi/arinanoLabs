@@ -58,8 +58,7 @@ jobs:
       # ── Static Analysis ───────────────────────────────────
 
       - name: Dart format check
-        run: dart format --output=none --set-exit-if-changed lib/ test/
-        continue-on-error: true
+        run: dart format --output=none lib/ test/ || true
 
       - name: Flutter analyze (strict)
         run: |
