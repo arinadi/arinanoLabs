@@ -111,60 +111,6 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ),
 
-              // ── Update Available Banner ──
-              if (state.updateAvailable)
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
-                    child: Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            ArinanoxTheme.primary.withValues(alpha: 0.15),
-                            ArinanoxTheme.primary.withValues(alpha: 0.05),
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: ArinanoxTheme.primary.withValues(alpha: 0.3),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.system_update_rounded,
-                              color: ArinanoxTheme.primary, size: 20),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('Update Available',
-                                    style: ArinanoxTheme.headingSm.copyWith(
-                                        color: ArinanoxTheme.primary)),
-                                const SizedBox(height: 2),
-                                Text(
-                                  'v${state.latestVersion} — tap Update below',
-                                  style: ArinanoxTheme.bodySm,
-                                ),
-                              ],
-                            ),
-                          ),
-                          if (state.isUpdating)
-                            const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: ArinanoxTheme.primary,
-                              ),
-                            ),
-                        ],
-                      ),
-                    ).animate().fadeIn(duration: 400.ms),
-                  ),
-                ),
-
               // ── Status Card ──
               SliverToBoxAdapter(
                 child: Padding(
@@ -299,20 +245,20 @@ class HomeScreen extends StatelessWidget {
                         onTap: state.createSnapshot,
                       ),
 
-                      // ── Update (APK) ──
-                      if (state.updateAvailable) ...[
-                        const SizedBox(height: 10),
-                        _ActionCard(
-                          icon: Icons.system_update_rounded,
-                          title: 'Update App',
-                          subtitle:
-                              'Download v${state.latestVersion} from GitHub Releases',
-                          color: ArinanoxTheme.primary,
-                          gradient: ArinanoxTheme.primaryGradient,
-                          enabled: !state.isUpdating,
-                          onTap: () => state.installAppUpdate(),
-                        ),
-                      ],
+                      // ── Update Scripts ──
+                      _ActionCard(
+                        icon: Icons.sync_rounded,
+                        title: 'Update Scripts',
+                        subtitle:
+                            'Download latest launchers + scripts from GitHub',
+                        color: ArinanoxTheme.primary,
+                        gradient: ArinanoxTheme.primaryGradient,
+                        enabled: state.isInstalled && !state.isUpdating,
+                        onTap: () async {
+                          await state.updateScripts();
+                          _showTerminal(context, state);
+                        },
+                      ),
 
                     ]
                         .animate(interval: 80.ms)

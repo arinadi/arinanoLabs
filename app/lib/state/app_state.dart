@@ -17,9 +17,6 @@ class AppState extends ChangeNotifier {
   int _layeredPackages = 0;
 
   // ── Update State ──
-  bool _updateAvailable = false;
-  String _latestVersion = '';
-  String _updateDownloadUrl = '';
   bool _isUpdating = false;
 
   // ── Device Info ──
@@ -42,10 +39,6 @@ class AppState extends ChangeNotifier {
   Map<String, dynamic> get deviceInfo => _deviceInfo;
   String? get errorMessage => _errorMessage;
   List<String> get terminalOutput => _terminalOutput;
-
-  // ── Update Getters ──
-  bool get updateAvailable => _updateAvailable;
-  String get latestVersion => _latestVersion;
   bool get isUpdating => _isUpdating;
 
   String get gpuType {
@@ -74,7 +67,6 @@ class AppState extends ChangeNotifier {
 
     await refreshStatus();
     await loadDeviceInfo();
-    await checkForAppUpdate(); // Fire-and-forget
   }
 
   Future<void> refreshStatus() async {
@@ -185,42 +177,26 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  // ── Update (App APK from GitHub Releases) ──
+  // ── Update Scripts ──
 
-  Future<void> checkForAppUpdate() async {
-    try {
-      _errorMessage = null;
-      final info = await ArinanoxShell.checkAppUpdate();
-      if (info != null) {
-        _updateAvailable = true;
-        _latestVersion = info['version'] as String? ?? '';
-        _updateDownloadUrl = info['downloadUrl'] as String? ?? '';
-      } else {
-        _updateAvailable = false;
-      }
-      notifyListeners();
-    } catch (e) {
-      // Silently fail — network may be unavailable
-      _updateAvailable = false;
-      notifyListeners();
-    }
-  }
-
-  Future<bool> installAppUpdate() async {
-    if (_updateDownloadUrl.isEmpty) return false;
+  Future<void> updateScripts() async {
     try {
       _isUpdating = true;
       _errorMessage = null;
+      _terminalOutput.add('\$ Updating scripts from GitHub...\n');
       notifyListeners();
-      final ok = await ArinanoxShell.installAppUpdate(_updateDownloadUrl);
+      final ok = await ArinanoxShell.updateScripts();
       _isUpdating = false;
+      if (ok) {
+        _terminalOutput.add('✓ Scripts updated successfully.\n');
+      } else {
+        _terminalOutput.add('✗ Script update failed. Check connection.\n');
+      }
       notifyListeners();
-      return ok;
     } catch (e) {
       _isUpdating = false;
-      _errorMessage = 'Update install failed: $e';
+      _errorMessage = 'Script update failed: $e';
       notifyListeners();
-      return false;
     }
   }
 

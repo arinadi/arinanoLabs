@@ -61,21 +61,12 @@ class ArinanoxShell {
     return result as bool? ?? true;
   }
 
-  // ── App Update (APK from GitHub Releases) ──
+  // ── Script Update (bash scripts from GitHub raw) ──
 
-  /// Check GitHub Releases for latest APK version.
-  /// Returns null if up-to-date, or {version, downloadUrl, size} if newer available.
-  static Future<Map<String, dynamic>?> checkAppUpdate() async {
-    final result = await _channel.invokeMethod('checkAppUpdate');
-    if (result == null) return null;
-    return Map<String, dynamic>.from(result);
-  }
-
-  /// Download latest APK and open Android installer.
-  static Future<bool> installAppUpdate(String downloadUrl) async {
-    final result = await _channel.invokeMethod('installAppUpdate', {
-      'url': downloadUrl,
-    });
+  /// Download latest launcher + scripts from GitHub.
+  /// Streams output via onTerminalOutput.
+  static Future<bool> updateScripts() async {
+    final result = await _channel.invokeMethod('updateScripts');
     return result as bool? ?? false;
   }
 }
