@@ -167,7 +167,7 @@ jobs:
       - name: Rename APK with version
         run: |
           SRC="build/app/outputs/flutter-apk/app-${{ inputs.build_type }}.apk"
-          DST="build/app/outputs/flutter-apk/arinanox-v${{ needs.debug.outputs.app_version }}-${{ inputs.build_type }}.apk"
+          DST="build/app/outputs/flutter-apk/arinanox-v${{ needs.debug.outputs.app_version }}+${{ github.run_number }}-${{ inputs.build_type }}.apk"
           mv "$SRC" "$DST"
           echo "apk_file=$(basename "$DST")" >> $GITHUB_ENV
 
