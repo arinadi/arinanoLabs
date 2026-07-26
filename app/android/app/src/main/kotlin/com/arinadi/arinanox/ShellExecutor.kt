@@ -90,11 +90,17 @@ class ShellExecutor {
 
     /**
      * Send SIGINT to currently running command.
+     *
+     * Uses reflection to access the private pid field because
+     * Android's java.lang.Process lacks the Java 9+ pid() method.
      */
     fun interruptCommand() {
         currentProcess?.let { process ->
             try {
-                Runtime.getRuntime().exec(arrayOf("kill", "-2", process.pid().toString()))
+                val pidField = process.javaClass.getDeclaredField("pid")
+                pidField.isAccessible = true
+                val pid = pidField.getInt(process)
+                Runtime.getRuntime().exec(arrayOf("kill", "-2", pid.toString()))
             } catch (_: Exception) {
                 // Process may have already completed
             }
