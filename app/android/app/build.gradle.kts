@@ -32,7 +32,22 @@ android {
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.getByName("debug")
+            // Use CI keystore if available (env vars), else fall back to debug
+            val keystorePath = System.getenv("ARINANOX_KEYSTORE_PATH")
+            val keystorePass = System.getenv("ARINANOX_KEYSTORE_PASS")
+            val keyAlias = System.getenv("ARINANOX_KEY_ALIAS")
+            val keyPass = System.getenv("ARINANOX_KEY_PASS")
+
+            signingConfig = if (keystorePath != null && keystorePass != null) {
+                signingConfigs.create("release") {
+                    storeFile = file(keystorePath)
+                    storePassword = keystorePass
+                    keyAlias = keyAlias ?: "arinanox"
+                    keyPassword = keyPass ?: keystorePass
+                }
+            } else {
+                signingConfigs.getByName("debug")
+            }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

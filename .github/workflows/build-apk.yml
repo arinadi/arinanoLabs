@@ -182,6 +182,22 @@ jobs:
       - name: Generate launcher icons
         run: dart run flutter_launcher_icons
 
+      - name: Setup signing keystore
+        run: |
+          if [ -n "${{ secrets.ARINANOX_KEYSTORE_B64 }}" ]; then
+            echo "Using keystore from GitHub Secrets"
+            echo "${{ secrets.ARINANOX_KEYSTORE_B64 }}" | base64 -d > /tmp/arinanox.keystore
+            echo "ARINANOX_KEYSTORE_PATH=/tmp/arinanox.keystore" >> $GITHUB_ENV
+            echo "ARINANOX_KEYSTORE_PASS=${{ secrets.ARINANOX_KEYSTORE_PASS }}" >> $GITHUB_ENV
+            echo "ARINANOX_KEY_ALIAS=${{ secrets.ARINANOX_KEY_ALIAS }}" >> $GITHUB_ENV
+            echo "ARINANOX_KEY_PASS=${{ secrets.ARINANOX_KEY_PASS }}" >> $GITHUB_ENV
+          else
+            echo "⚠️  No keystore secret configured — using debug keystore"
+            echo "⚠️  Updates will fail with 'app not installed' due to signature mismatch"
+            echo "⚠️  Generate one with: keytool -genkey -keystore arinanox.keystore -alias arinanox -keyalg RSA -keysize 2048 -validity 36500"
+            echo "⚠️  Then add as GitHub Secret: ARINANOX_KEYSTORE_B64 (base64 of file)"
+          fi
+
       - name: Build APK (${{ inputs.build_type }})
         run: flutter build apk --${{ inputs.build_type }}
 
