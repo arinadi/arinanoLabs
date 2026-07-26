@@ -158,6 +158,27 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Android Lint
+        run: |
+          cd android
+          if [ ! -f gradle/wrapper/gradle-wrapper.jar ]; then
+            curl -sL "https://raw.githubusercontent.com/gradle/gradle/v8.9.0/gradle/wrapper/gradle-wrapper.jar" \
+              -o gradle/wrapper/gradle-wrapper.jar
+          fi
+          chmod +x gradlew
+          ./gradlew app:lintRelease --no-daemon --stacktrace 2>&1 | tee lint.log
+        continue-on-error: true
+
+      - name: Upload Android lint report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-lint-report
+          path: |
+            app/android/app/build/reports/lint-results-release.html
+            app/android/lint.log
+          retention-days: 7
+
       - name: Generate launcher icons
         run: dart run flutter_launcher_icons
 
