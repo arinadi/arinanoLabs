@@ -177,6 +177,27 @@ class AppState extends ChangeNotifier {
     }
   }
 
+  // ── Install ──
+
+  Future<void> installArinanox() async {
+    try {
+      _isUpdating = true;
+      _errorMessage = null;
+      _terminalOutput.add('\$ Installing arinanoX...\n');
+      notifyListeners();
+      await ArinanoxShell.executeCommand(
+        'curl -sL https://raw.githubusercontent.com/arinadi/arinanoX/main/bootstrap.sh | bash'
+      );
+      _isUpdating = false;
+      await refreshStatus();
+      notifyListeners();
+    } catch (e) {
+      _isUpdating = false;
+      _errorMessage = 'Install failed: $e';
+      notifyListeners();
+    }
+  }
+
   // ── Update Scripts ──
 
   Future<void> updateScripts() async {

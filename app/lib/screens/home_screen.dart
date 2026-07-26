@@ -122,44 +122,24 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
 
-              // ── Not Installed Banner ──
+              // ── Not Installed ──
               if (!state.isInstalled)
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
-                    child: Card(
-                      color: ArinanoxTheme.warning.withValues(alpha: 0.1),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('arinanoX not installed',
-                                style: ArinanoxTheme.headingSm.copyWith(
-                                    color: ArinanoxTheme.warning)),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Run this command in Termux to install:',
-                              style: ArinanoxTheme.bodySm,
-                            ),
-                            const SizedBox(height: 8),
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: Colors.black38,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: SelectableText(
-                                'curl -sL https://raw.githubusercontent.com/arinadi/arinanoX/main/bootstrap.sh | bash',
-                                style: ArinanoxTheme.monoSm.copyWith(
-                                  color: ArinanoxTheme.primaryLight,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ).animate().fadeIn(delay: 200.ms, duration: 400.ms),
+                    child: _ActionCard(
+                      icon: Icons.download_rounded,
+                      title: 'Install arinanoX',
+                      subtitle:
+                          'Download and set up Debian 13 + XFCE desktop (~30s)',
+                      color: ArinanoxTheme.primary,
+                      gradient: ArinanoxTheme.primaryGradient,
+                      enabled: !state.isUpdating,
+                      onTap: () async {
+                        await state.installArinanox();
+                        _showTerminal(context, state);
+                      },
+                    ).animate().fadeIn(delay: 100.ms, duration: 400.ms),
                   ),
                 ),
 
