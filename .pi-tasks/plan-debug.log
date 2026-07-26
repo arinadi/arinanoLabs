@@ -1,0 +1,8 @@
+2026-07-26T02:15:37.204Z clarify-triage auto-resolved (spec-settled): Does DroidDesk's Android app (in android/) provide a custom X11 client APK that would replace Termux → companion app/script that works alongside Termux:X11 (adds lifecycle management, quick settings tile
+2026-07-26T02:17:34.750Z requirement extraction: 5 grounded requirement(s) kept
+2026-07-26T02:18:21.907Z decompose fidelity: 2/8 titles cited a grounded source; 0 restoration(s)
+2026-07-26T02:18:21.911Z decompose produced 8 title(s)
+2026-07-26T02:18:46.401Z coverage-map (8 titles): 5 task-mapped, 0 cross-cutting, 0 unmapped; 3 requirement(s) title-grounded
+2026-07-26T02:18:46.402Z decompose-coverage: COMPLETE — every grounded requirement is task-mapped or cross-cutting
+2026-07-26T02:19:10.700Z contract extraction: 1 grounded contract(s) kept from 1 emitted
+2026-07-26T02:19:18.952Z launch-contract extraction: 0 grounded script(s) kept from 0 emitted
