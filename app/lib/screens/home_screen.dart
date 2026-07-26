@@ -137,6 +137,7 @@ class HomeScreen extends StatelessWidget {
                       enabled: !state.isUpdating,
                       onTap: () async {
                         await state.installArinanox();
+                        if (!context.mounted) return;
                         _showTerminal(context, state);
                       },
                     ).animate().fadeIn(delay: 100.ms, duration: 400.ms),
@@ -208,6 +209,7 @@ class HomeScreen extends StatelessWidget {
                         enabled: state.isInstalled,
                         onTap: () async {
                           await state.runDoctor();
+                          if (!context.mounted) return;
                           _showTerminal(context, state);
                         },
                       ),
@@ -236,6 +238,7 @@ class HomeScreen extends StatelessWidget {
                         enabled: state.isInstalled && !state.isUpdating,
                         onTap: () async {
                           await state.updateScripts();
+                          if (!context.mounted) return;
                           _showTerminal(context, state);
                         },
                       ),
